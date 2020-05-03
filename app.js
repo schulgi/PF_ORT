@@ -1,6 +1,7 @@
 const express = require('express'); //Express Framework
 const app = express(); //Saving Framework on Variable App
 const mongoose =  require('mongoose');
+const bodyParser = require('body-parser');
 
 //DB Config Connection String File
 const db = require('./config/keys').MongoURI;
@@ -12,6 +13,7 @@ mongoose.connect(db,{useNewUrlParser: true})
 
 // BodyParser
 app.use(express.urlencoded({extended: false}));
+app.use(bodyParser.json());
 
 //Routes
 app.use('/',require('./routes/api/signin'));

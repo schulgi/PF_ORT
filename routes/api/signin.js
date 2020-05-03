@@ -3,7 +3,7 @@ const express = require('express');
 var bodyParser = require('body-parser');
 const app = express.Router();
 
-app.post('/api/account/signup',bodyParser.urlencoded({ extended: false }),(req,res,next) => {
+app.post('/api/account/signup',(req,res,next) => {
     
     const{ body } = req;
     
