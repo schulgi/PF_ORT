@@ -12,7 +12,7 @@ const navbar = props => (
               <ReactBootStrap.Navbar.Collapse id="responsive-navbar-nav">
                   <ReactBootStrap.Nav className="mr-auto"></ReactBootStrap.Nav>
                    <ReactBootStrap.Nav>
-                      <ReactBootStrap.Nav.Link href="#deets">Log in</ReactBootStrap.Nav.Link>
+                      <ReactBootStrap.Nav.Link href="">Log in</ReactBootStrap.Nav.Link>
                       <ReactBootStrap.Nav.Link eventKey={2} href="#memes">Registrarse</ReactBootStrap.Nav.Link>
                    </ReactBootStrap.Nav>
                  </ReactBootStrap.Navbar.Collapse>

@@ -13,6 +13,7 @@
   "author": "Ort PF",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^4.0.1",
     "bcryptjs": "^2.4.3",
     "bootstrap": "^4.4.1",
     "concurrently": "^5.2.0",
@@ -22,7 +23,8 @@
     "mongoose": "^5.9.10",
     "passport": "^0.4.1",
     "passport-local": "^1.0.0",
-    "react-bootstrap-validation": "^0.1.11"
+    "react-bootstrap-validation": "^0.1.11",
+    "react-router-dom": "^5.1.2"
   },
   "devDependencies": {
     "nodemon": "^2.0.3"
