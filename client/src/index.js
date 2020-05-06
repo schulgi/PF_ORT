@@ -3,9 +3,6 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
-import 'bootstrap/dist/css/bootstrap.min.css';
-/*npm install bootstrap o no funciona el 
-import 'bootstrap/dist/css'*/
 
 /*Archivo JS renderizador de todo el front se puede
 ver que algunos imports nos dan la idea de que es el archivo

@@ -3,6 +3,7 @@ const UserSession = require('../../models/userSession');
 const express = require('express');
 const app = express.Router();
 
+//Registrar
 app.post('/api/account/signup',(req,res,next) => {
     
     const{ body } = req;
@@ -60,7 +61,7 @@ app.post('/api/account/signup',(req,res,next) => {
          });
         }
 
-        //Guardo el User. Creo el Objeto User
+        //Guardo el User. Creo el Objeto Users
         const newUser = new User();
 
         newUser.email = email;
@@ -82,6 +83,7 @@ app.post('/api/account/signup',(req,res,next) => {
     });
 });
 
+//Logiar
 app.post('/api/account/signin',(req,res,next) => {
     
     const{ body } = req;
@@ -118,15 +120,13 @@ app.post('/api/account/signin',(req,res,next) => {
                 message: 'Error: Server Error'
             });
         }
+        //console.log(user);
         if(user.length != 1){
             return res.send({
                 success:false,
                 message: 'Error: Datos Erroneos'
             });
         }
-        
-        /*Porque otra variable user si es la que ya 
-        traigo de la bd cuando hago find*/
         
         const user_ = user[0];
         if(!user_.validPassword(password)){
@@ -154,6 +154,7 @@ app.post('/api/account/signin',(req,res,next) => {
     });
 });
 
+//Deslogiar -- No cambia el estado
 app.post('/api/account/logout',(req,res,next) => {
     
     const { query } = req;
@@ -163,9 +164,9 @@ app.post('/api/account/logout',(req,res,next) => {
     UserSession.findOneAndUpdate({
         _id: token,
         isDeleted: false
-    }, { 
-        $set:{isDeleted:true}
-    }, null, (err,sessions) => {
+    }, {$set:{isDeleted:true}}, null, (err,sessions) => {
+        console.log(_id);
+        console.log(isDeleted);
         if(err) {
             return res.send({
                 success: false,
@@ -179,8 +180,7 @@ app.post('/api/account/logout',(req,res,next) => {
   });
 });
 
-
-//Ver no devuelve Token
+//No puede verificar ya que Logout no esta funcionando
 app.get('/api/account/verify',(req,res,next) => {
     
     const { query } = req;
@@ -199,8 +199,6 @@ app.get('/api/account/verify',(req,res,next) => {
         });
       }
 
-      console.log(sessions);
-
       if(sessions.length != 1){
         return res.send({
             success: false,
@@ -216,6 +214,36 @@ app.get('/api/account/verify',(req,res,next) => {
   });
 });
 
+//Completa datos abogado
+app.post('/api/account/modify', (req,res,next) => {
+    
+    const{ body } = req;
+    
+    let { 
+        email
+    } = body;
+
+    email = email.toLowerCase();
+
+    User.findOneAndUpdate({
+        email: email,
+    }, {$set:{firstName:'dsadsa'}}, null, (err,sessions) => {
+        //console.log(matricula);
+        if(err) {
+            return res.send({
+                success: false,
+                message: 'Error: Server error'
+        });
+      }
+        return res.send({
+            success: true,
+            message: 'Cambios aceptados'
+        });
+  });
+
+});
+
+
 module.exports = app;
 
 /*Crear Ruta para verificar o hacerlo dentro de SIGNIN la 
@@ -225,8 +253,6 @@ permitir el aviso de que hay mas de 1 session loggiada*/
 
 /*Hay que hacer una ruta que maneje tokens porque esta
 reemplazando el token en cada session totalmente vulnerable*/
-
-/*https://stackoverflow.com/questions/17000835/token-authentication-vs-cookies*/
 
 /*Token vs Cookie*/
 

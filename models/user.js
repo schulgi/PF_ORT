@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const Schema = mongoose.Schema;
 
 const UserSchema = new mongoose.Schema({
     firstName:{
@@ -25,7 +26,11 @@ const UserSchema = new mongoose.Schema({
     isDeleted:{
         type: Boolean,
         default: false
+    },
+    tipo:{
+        type: [{ type: Schema.Types.ObjectId, ref: 'abogado' }]
     }
+   
 });
 
 UserSchema.methods.generateHash = function(password){
