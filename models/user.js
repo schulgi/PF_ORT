@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const Schema = mongoose.Schema;
+const Schema = mongoose.Schema();
 
 const UserSchema = new mongoose.Schema({
     firstName:{
@@ -26,11 +26,7 @@ const UserSchema = new mongoose.Schema({
     isDeleted:{
         type: Boolean,
         default: false
-    },
-    tipo:{
-        type: [{ type: Schema.Types.ObjectId, ref: 'abogado' }]
     }
-   
 });
 
 UserSchema.methods.generateHash = function(password){
@@ -41,6 +37,5 @@ UserSchema.methods.validPassword = function(password){
     return bcrypt.compareSync(password,this.password);
 }
 
-const user = mongoose.model('user',UserSchema);
+module.exports = mongoose.model('user',UserSchema);
 
-module.exports = user;

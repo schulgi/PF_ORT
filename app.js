@@ -2,7 +2,7 @@ const express = require('express'); //Express Framework
 const app = express(); //Saving Framework on Variable App
 const mongoose =  require('mongoose');
 const bodyParser = require('body-parser');
-
+const morgan = require('morgan');
 
 //DB Config Connection String File
 const db = require('./config/keys').MongoURI;
@@ -18,6 +18,9 @@ app.use(bodyParser.json());
 
 //Routes
 app.use('/',require('./routes/api/signin'));
+
+//Middleware
+app.use(morgan('combined'));
 
 //App Listening Selected Port
 const port = process.env.PORT || 5000; //Selected Port Number

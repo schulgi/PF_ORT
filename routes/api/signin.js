@@ -1,262 +1,210 @@
-const User = require('../../models/user');
-const UserSession = require('../../models/userSession');
+const User = require('../../models/User');
 const express = require('express');
 const app = express.Router();
+const jwt = require('jsonwebtoken');
+const secret = require('../../config/secret');
+const verifyToken = require('../api/verifyToken');
 
-//Registrar
-app.post('/api/account/signup',(req,res,next) => {
+//Registrar Cliente JWT
+app.post('/api/signup', async (req,res,next) => {
     
-    const{ body } = req;
-    
-    const { 
-      firstName,
-      lastName,
-      password
-    } = body;
-    
-    let{
-        email
-    } = body;
+    /*Recibo parametros del body html*/ 
+    const { body } = req;
+    const {firstName,lastName,password} = body;
 
-   //No es res.end() es res.send() ver dif. Explota con end();
+    /*no es const ya que lo modifico con toLowerCase*/
+    let { email } = body;
+
+    /*siempre hacerle lower*/
+    email = email.toLowerCase();
+
+    /*Validar entradas*/
     if(!firstName){
         return res.send({
             success:false,
-            message: 'Error: El campo nombre no puede estar vacío'
+            message: 'Nombre Sin Datos/Error'
      });
     }
     if(!lastName){
         return res.send({
             success:false,
-            message: 'Error: El campo apellido no puede estar vacío'
+            message: 'Apellido Sin Datos/Error'
      });
     }
     if(!email){
         return res.send({
             success:false,
-            message: 'Error: El campo email no puede estar vacío'
+            message: 'Email Sin Datos/Error'
      });
     }
     if(!password){
         return res.send({
             success:false,
-            message: 'Error: El campo contraseña no puede estar vacío'
+            message: 'Password Sin Datos/Error'
      });
     }
 
-    email = email.toLowerCase();
-
-    User.find({
-        email: email
-    }, (err, previousUsers) => {
+    /*Busco que el user no este repetido*/    
+    await User.find({email: email}, (err, searchrepeat) => {
         if(err){
-            return res.send({
+                res.send({
                 success:false,
-                message: 'Error: Server error'
+                message: 'Error Finding User'
          });
-        } else if (previousUsers.length > 0){
-            return res.send({
+        } else if (searchrepeat.length > 0){
+                res.send({
                 success:false,
-                message: 'Error: La cuenta ya existe.'
+                message: 'Cuenta Existente'
          });
-        }
-
-        //Guardo el User. Creo el Objeto Users
-        const newUser = new User();
-
-        newUser.email = email;
-        newUser.firstName = firstName;
-        newUser.lastName = lastName;
-        newUser.password = newUser.generateHash(password);
-        newUser.save((err,user) => {
-            if(err){
-                return res.send({
-                    success:false,
-                    message: 'Error: Server error'
-                });
-            }
-            return res.send({
-                success: true,
-                message: 'Signed Up'
-            });
-        });
+        } 
     });
+
+
+    /*Creo un usuario de entrada*/
+
+    const user = new User({   
+        firstName,
+        lastName,
+        password,
+        email
+    });
+    user.password = user.generateHash(password);
+    user.save((err) => {
+        if(err){
+                res.send({
+                success:false,
+                message: 'Error Saving'
+            });
+        }
+    });
+
+    const token = jwt.sign({id : user._id},secret.secret, {
+        expiresIn: 60 * 60 * 24 /*Un dia, expresado en segundos*/
+    });
+
+    res.json({auth: true, token});
+
 });
 
-//Logiar
-app.post('/api/account/signin',(req,res,next) => {
+//Verificar JWT Front-End, se envia token
+app.get('/api/verify', verifyToken, async (req,res,next) => {
+
+    /*Verifico que exista el token , que no esté caducado*/
+    /*Le pasamos el token del User y el SECRET de la app*/
+
+    const user = await User.findById(req.usuarioId,{ password: 0 });
+    if(!user){
+        return res.status(401).send('Usuario No Encontrado')
+    }
+
+    res.json(user);
+
+});
+
+//Logiar Cliente JWT
+app.post('/api/signin', async (req,res,next) => {
     
+    /*Consumo Body HTML*/ 
     const{ body } = req;
         
-    const { 
-      password
-    } = body;
-        
-    let{
-       email
-    } = body;
+    const { password } = body;
+    
+    /*No es una const*/
+    let{ email } = body;
 
+    /*Validaciones*/
     if(!email){
         return res.send({
             success:false,
-            message: 'Error: El campo email no puede estar vacío'
+            message: 'Email Vacio'
      });
     }
     if(!password){
         return res.send({
             success:false,
-            message: 'Error: El campo contraseña no puede estar vacío'
+            message: 'Password Vacio'
      });
     }
 
+    /*LowerCase Mail*/
     email = email.toLowerCase();
 
-    User.find({
-        email: email
-    },(err,user) =>{
+    /*Si existe error de Headers quitar returns*/
+
+    await User.find({email: email},(err,user) =>{
         if(err){
             return res.send({
                 success:false,
-                message: 'Error: Server Error'
+                message: 'Error Servidor'
             });
         }
-        //console.log(user);
         if(user.length != 1){
             return res.send({
                 success:false,
-                message: 'Error: Datos Erroneos'
+                message: 'Datos Erroneos Mail Inexistente'
             });
         }
         
         const user_ = user[0];
         if(!user_.validPassword(password)){
             return res.send({
-                success:false,
-                message: 'Error: Invalid'
+                auth:false,
+                token: null,
+                message: 'Contraseña/Mail Incorrectos'
             });
         }
 
-        const UserSession_ = new UserSession();
-        UserSession_.userId = user._id;
-        UserSession_.save((err,doc) => {
-            if(err){
-                return res.send({
-                    success:false,
-                    message: 'Error: Server error'
-            });
-          }
-          return res.send({
-            success:true,
-            message: 'Entrada Valida',
-            token: doc._id
-           });
+        const token = jwt.sign({id: user._id}, secret.secret,{
+            expiresIn: 60 * 60* 24
         });
+        
+        res.json({auth:true,token});
+
     });
 });
 
-//Deslogiar -- No cambia el estado
-app.post('/api/account/logout',(req,res,next) => {
-    
-    const { query } = req;
-    
-    const { token } = query;
+//Deslogiar , Romper Cookie
+app.post('/api/logout',(req,res,next) => {
 
-    UserSession.findOneAndUpdate({
-        _id: token,
-        isDeleted: false
-    }, {$set:{isDeleted:true}}, null, (err,sessions) => {
-        console.log(_id);
-        console.log(isDeleted);
-        if(err) {
-            return res.send({
-                success: false,
-                message: 'Error:Server error'
-        });
-      }
-        return res.send({
-            success: true,
-            message: 'Session Cerrada'
-        });
-  });
 });
 
-//No puede verificar ya que Logout no esta funcionando
-app.get('/api/account/verify',(req,res,next) => {
-    
-    const { query } = req;
-    
-    const { token } = query;
-
-    UserSession.find({
-        _id: token,
-        isDeleted: false
-    }, (err,sessions) => {
-        if(err) {
-            console.log(err);
-            return res.send({
-                success: false,
-                message: 'Error: Server error'
-        });
-      }
-
-      if(sessions.length != 1){
-        return res.send({
-            success: false,
-            message: 'Error: Server error'
-        });
-    }else{
-        return res.send({
-            success: true,
-            message: 'Valid'
-        });
-    }
-    
-  });
-});
-
-//Completa datos abogado
-app.post('/api/account/modify', (req,res,next) => {
-    
+//Test Push Populate
+app.post('/api/mongodb',(req,res,next) => {
+   
     const{ body } = req;
     
-    let { 
-        email
+      const { 
+      name,
+      age
     } = body;
 
-    email = email.toLowerCase();
+    
+    const { 
+        creator,
+        title
+      } = body;
+   
 
-    User.findOneAndUpdate({
-        email: email,
-    }, {$set:{firstName:'dsadsa'}}, null, (err,sessions) => {
-        //console.log(matricula);
-        if(err) {
-            return res.send({
-                success: false,
-                message: 'Error: Server error'
+        //Guardo el User. Creo el Objeto Users
+        const newStory = new Story();
+        newStory._creator = creator;
+        newStory.title = title;
+        newStory.save()
+        .then((result) => {
+          Person.findOne({ name: 'gabriel' }, (err, user) => {
+              if (user) {
+                  user.stories.push(newStory.title);
+                  user.save();
+                  res.json({ message: 'Object Created' });
+              }
+          });
+        })
+        .catch((error) => {
+          res.status(500).json({ error });
         });
-      }
-        return res.send({
-            success: true,
-            message: 'Cambios aceptados'
-        });
-  });
 
 });
-
 
 module.exports = app;
 
-/*Crear Ruta para verificar o hacerlo dentro de SIGNIN la 
-idea del verificar es que si se quieren loggiar de otra pc
-no les permita que tiene un token activo, o dejar loggiar pero
-permitir el aviso de que hay mas de 1 session loggiada*/
-
-/*Hay que hacer una ruta que maneje tokens porque esta
-reemplazando el token en cada session totalmente vulnerable*/
-
-/*Token vs Cookie*/
-
-/*Para que la session no pueda ser iniciada varias veces en menos
-de un determinado tiempo, crear verificador y crear parametro
-next possible login, attempts limiter*/ 
 
