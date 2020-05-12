@@ -3,9 +3,14 @@ const app = express(); //Saving Framework on Variable App
 const mongoose =  require('mongoose');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
+const cors = require('cors');
+
 
 //DB Config Connection String File
 const db = require('./config/keys').MongoURI;
+
+//CORS 
+app.use(cors({origin: 'http://localhost:3000'})); 
 
 //Connect to Mongo
 mongoose.connect(db,{useNewUrlParser: true})
@@ -18,9 +23,10 @@ app.use(bodyParser.json());
 
 //Routes
 app.use('/',require('./routes/api/signin'));
+app.use('/',require('./routes/api/uploadFiles'));
 
 //Middleware
-app.use(morgan('combined'));
+app.use(morgan('dev'));
 
 //App Listening Selected Port
 const port = process.env.PORT || 5000; //Selected Port Number

@@ -10,7 +10,8 @@ app.post('/api/signup', async (req,res,next) => {
     
     /*Recibo parametros del body html*/ 
     const { body } = req;
-    const {firstName,lastName,password} = body;
+
+    const {nombre,apellido,password,tipo} = body;
 
     /*no es const ya que lo modifico con toLowerCase*/
     let { email } = body;
@@ -19,13 +20,13 @@ app.post('/api/signup', async (req,res,next) => {
     email = email.toLowerCase();
 
     /*Validar entradas*/
-    if(!firstName){
+    if(!nombre){
         return res.send({
             success:false,
             message: 'Nombre Sin Datos/Error'
      });
     }
-    if(!lastName){
+    if(!apellido){
         return res.send({
             success:false,
             message: 'Apellido Sin Datos/Error'
@@ -41,6 +42,12 @@ app.post('/api/signup', async (req,res,next) => {
         return res.send({
             success:false,
             message: 'Password Sin Datos/Error'
+     });
+    }
+    if(!tipo){
+        return res.send({
+            success:false,
+            message: 'Sin Tipo'
      });
     }
 
@@ -63,11 +70,26 @@ app.post('/api/signup', async (req,res,next) => {
     /*Creo un usuario de entrada*/
 
     const user = new User({   
-        firstName,
-        lastName,
+        nombre,
+        apellido,
         password,
-        email
+        email,
+        tipo
     });
+
+    /*setDefaultsOnInsert Upsert Reemplazar esta logica
+    no debe estar atado al endpoint*/
+    
+    if(tipo === 'A'){
+        user.documents = null;
+        user.cv = null;
+        //Json Para Abogados
+    }
+    if(tipo === 'C'){
+        user.consultas = null;
+        //Json Para Clientes
+    }
+    
     user.password = user.generateHash(password);
     user.save((err) => {
         if(err){
@@ -76,13 +98,17 @@ app.post('/api/signup', async (req,res,next) => {
                 message: 'Error Saving'
             });
         }
+
     });
 
-    const token = jwt.sign({id : user._id},secret.secret, {
-        expiresIn: 60 * 60 * 24 /*Un dia, expresado en segundos*/
+     res.json({message: 'Registro Exitoso'});
+
+    /*const token = jwt.sign({id : user._id},secret.secret, {
+        expiresIn: 60 * 60 * 24 
     });
 
-    res.json({auth: true, token});
+    res.json({auth: true, token});*/
+
 
 });
 
@@ -163,9 +189,30 @@ app.post('/api/signin', async (req,res,next) => {
     });
 });
 
+//Ya esta integrado en Register -- No sirve mas
+app.post('/api/addfields', (req,res) => {
+    
+    const { body } = req;
+
+    const email = body;
+    
+    User.findOneAndUpdate({'email' : email}, 
+    {'$set' : {'matricula' : '' ,'consultas' : '' ,'especialidad' : '' }},
+    (error, doc) => {
+       if(error){
+        return res.send({
+            success:false,
+            message: 'Error Update'
+        });
+        }
+    });
+
+    res.send('Campos Añadidos');
+
+});
+
 //Deslogiar , Romper Cookie
 app.post('/api/logout',(req,res,next) => {
-
 });
 
 //Test Push Populate

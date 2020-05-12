@@ -1,15 +1,17 @@
 import React from 'react';
+import Navbar from './components/IndexPage/Navbar/Navbar';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
+class App extends React.Component {
 
-function App() {
-  return(
-    <div className="wrapper">
-      <div className="form-wrapper">
-        <h1>Create Account</h1>
+render (){
+    return (
+      <div>
+       <Navbar/>
       </div>
-    </div>
-  );
+           ); 
 
+         }
 }
 
 export default App;
